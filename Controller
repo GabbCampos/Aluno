@@ -1,0 +1,61 @@
+package br.ufra;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+@RestController
+@RequestMapping("/alunos")
+public class AlunoController {
+
+    @Autowired
+    private AlunoRepository alunos;
+
+    // GET /alunos
+    @GetMapping
+    public List<Aluno> listar() {
+        return alunos.findAll();
+    }
+
+    // GET /alunos/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<Aluno> buscarPorId(@PathVariable Long id) {
+        return alunos.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // POST /alunos
+    @PostMapping
+    public Aluno adicionar(@RequestBody Aluno aluno) {
+        return alunos.save(aluno);
+    }
+
+    // PUT /alunos/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<Aluno> atualizar(@PathVariable Long id, @RequestBody Aluno alunoAtualizado) {
+        return alunos.findById(id)
+                .map(aluno -> {
+                    aluno.setNome(alunoAtualizado.getNome());
+                    aluno.setDisciplina(alunoAtualizado.getDisciplina());
+                    aluno.setNota(alunoAtualizado.getNota());
+                    aluno.setIdade(alunoAtualizado.getIdade());
+                    Aluno atualizado = alunos.save(aluno);
+                    return ResponseEntity.ok(atualizado);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // DELETE /alunos/{id}
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void remover(@PathVariable Long id) {
+        Aluno aluno = alunos.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Aluno não encontrado"));
+        alunos.delete(aluno);
+    }
+}
